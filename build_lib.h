@@ -9,7 +9,7 @@
 
 // Extract the directory containing this header at preprocessing time.
 // __FILE__ expands to the path the compiler used to open this file,
-// e.g. "vendor/ui_lib/build_lib.h" -> "vendor/ui_lib"
+// e.g. "vendor/ui/build_lib.h" -> "vendor/ui"
 static inline char *_ui_lib_dir(void) {
     static char dir[4096];
     static int done = 0;
@@ -30,6 +30,28 @@ static inline char *_ui_lib_dir(void) {
     return dir;
 }
 
+// Returns the parent directory of the library root.
+// e.g. "vendor/ui" -> "vendor"
+// Headers are included as <ui/ui.h>, so the parent must be on the include path.
+static inline char *_ui_lib_parent_dir(void) {
+    static char parent[4096];
+    static int done = 0;
+    if (!done) {
+        const char *d = _ui_lib_dir();
+        const char *slash = strrchr(d, '/');
+        if (slash) {
+            size_t n = (size_t)(slash - d);
+            memcpy(parent, d, n);
+            parent[n] = '\0';
+        } else {
+            parent[0] = '.';
+            parent[1] = '\0';
+        }
+        done = 1;
+    }
+    return parent;
+}
+
 // Build a path string: <library_root>/<file>, allocated from the arena.
 static inline char *_ui_lib_path(const char *file) {
     char *d = _ui_lib_dir();
@@ -43,7 +65,7 @@ static inline char *_ui_lib_path(const char *file) {
 // External dependencies (raylib, GLFW, platform frameworks) must be added
 // by the caller — this function only adds what lives in this library.
 static inline void ui_lib_add_to_build(Build *b) {
-    buildAddInclude(b, newDirectInclude(_ui_lib_dir()));
+    buildAddInclude(b, newDirectInclude(_ui_lib_parent_dir()));
     buildAddObject(b, newObject(_ui_lib_path("ui.c")));
     buildAddObject(b, newObject(_ui_lib_path("widgets/button.c")));
     buildAddObject(b, newObject(_ui_lib_path("widgets/slider.c")));
