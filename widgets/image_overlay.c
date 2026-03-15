@@ -1,5 +1,6 @@
 #include "image_overlay.h"
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ui/widgets/image_view.h>
 
@@ -25,12 +26,17 @@ static Rectangle __computeImageRenderBounds(UiImageView* iv) {
     return render_bounds;
 }
 
-UiWidget uiImageOverlayCreate(Arena* arena, UiWidget* attached_image_view) {
-    UiImageOverlay* overlay = (UiImageOverlay*)arenaAlloc(arena, sizeof(UiImageOverlay));
+static void uiImageOverlayFreeWidget(void* self) {
+    UiImageOverlay* overlay = (UiImageOverlay*)self;
+    free(overlay->locations);
+    free(overlay);
+}
+
+UiWidget uiImageOverlayCreate(UiWidget* attached_image_view) {
+    UiImageOverlay* overlay = (UiImageOverlay*)malloc(sizeof(UiImageOverlay));
     *overlay = (UiImageOverlay){
-        .__arena = arena,
         .attached_image_view = attached_image_view,
-        .locations = (OverlayLocation*)arenaAlloc(arena, INITIAL_LOCATIONS_CAP * sizeof(OverlayLocation)),
+        .locations = (OverlayLocation*)malloc(INITIAL_LOCATIONS_CAP * sizeof(OverlayLocation)),
         .num_locations = 0,
         .locations_cap = INITIAL_LOCATIONS_CAP,
         .default_radius = DEFAULT_RADIUS,
@@ -47,6 +53,7 @@ UiWidget uiImageOverlayCreate(Arena* arena, UiWidget* attached_image_view) {
         ._widget = overlay,
         .update = uiImageOverlayUpdate,
         .render = uiImageOverlayRender,
+        .free_widget = uiImageOverlayFreeWidget,
     };
 }
 
@@ -55,14 +62,8 @@ usize uiImageOverlayAddLocation(UiWidget* self, f32 x, f32 y) {
     UiImageOverlay* overlay = (UiImageOverlay*)self->_widget;
 
     if (overlay->num_locations >= overlay->locations_cap) {
-        usize new_cap = overlay->locations_cap * 2;
-        overlay->locations = (OverlayLocation*)arenaRealloc(
-            overlay->__arena,
-            (char*)overlay->locations,
-            overlay->locations_cap * sizeof(OverlayLocation),
-            new_cap * sizeof(OverlayLocation)
-        );
-        overlay->locations_cap = new_cap;
+        overlay->locations_cap *= 2;
+        overlay->locations = (OverlayLocation*)realloc(overlay->locations, overlay->locations_cap * sizeof(OverlayLocation));
     }
 
     usize index = overlay->num_locations++;

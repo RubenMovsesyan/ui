@@ -2,13 +2,16 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 
 constexpr f32 DEFAULT_MAX_ZOOM = 50.0f;
 
 
-UiWidget uiImageViewCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, Texture2D texture) {
-    UiImageView* image_view = (UiImageView*)arenaAlloc(arena, sizeof(UiImageView));
+static void uiImageViewFreeWidget(void* self) { free(self); }
+
+UiWidget uiImageViewCreate(u32 x, u32 y, u32 width, u32 height, Texture2D texture) {
+    UiImageView* image_view = (UiImageView*)malloc(sizeof(UiImageView));
     *image_view = (UiImageView){
         .bounds =
             {
@@ -32,6 +35,7 @@ UiWidget uiImageViewCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, Te
         ._widget = image_view,
         .update = uiImageViewUpdate,
         .render = uiImageViewRender,
+        .free_widget = uiImageViewFreeWidget,
     };
 }
 

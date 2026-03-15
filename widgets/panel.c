@@ -3,15 +3,25 @@
 #include "raymath.h"
 #include "ui/ui.h"
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 
 constexpr usize DEFAULT_WIDGET_CAP = 10;
 constexpr Color DEFAULT_BACKGROUND_COLOR = RAYWHITE;
 
-UiWidget uiPanelCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
-    UiPanel* panel = (UiPanel*)arenaAlloc(arena, sizeof(UiPanel));
+static void uiPanelFreeWidget(void* self) {
+    UiPanel* panel = (UiPanel*)self;
+    for (usize i = 0; i < panel->widget_count; i++) {
+        panel->widgets[i].free_widget(panel->widgets[i]._widget);
+    }
+    free(panel->widgets);
+    UnloadRenderTexture(panel->texture);
+    free(panel);
+}
+
+UiWidget uiPanelCreate(u32 x, u32 y, u32 width, u32 height) {
+    UiPanel* panel = (UiPanel*)malloc(sizeof(UiPanel));
     *panel = (UiPanel){
-        .__arena = arena,
         .bounds =
             (Rectangle){
                 .x = x,
@@ -19,7 +29,7 @@ UiWidget uiPanelCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
                 .width = width,
                 .height = height,
             },
-        .widgets = (UiWidget*)arenaAlloc(arena, DEFAULT_WIDGET_CAP * sizeof(UiWidget)),
+        .widgets = (UiWidget*)malloc(DEFAULT_WIDGET_CAP * sizeof(UiWidget)),
         .widget_count = 0,
         .widget_cap = DEFAULT_WIDGET_CAP,
         .background_color = DEFAULT_BACKGROUND_COLOR,
@@ -33,6 +43,7 @@ UiWidget uiPanelCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
         ._widget = panel,
         .update = uiPanelUpdate,
         .render = uiPanelRender,
+        .free_widget = uiPanelFreeWidget,
     };
 }
 
@@ -42,10 +53,8 @@ UiWidget* uiPanelAddWidget(UiWidget* self, UiWidget new_widget) {
     UiPanel* panel = (UiPanel*)self->_widget;
 
     if (panel->widget_count >= panel->widget_cap) {
-        panel->widgets = (UiWidget*)arenaRealloc(
-            panel->__arena, (char*)panel->widgets, panel->widget_cap * sizeof(UiWidget), panel->widget_cap * 2 * sizeof(UiWidget)
-        );
         panel->widget_cap *= 2;
+        panel->widgets = (UiWidget*)realloc(panel->widgets, panel->widget_cap * sizeof(UiWidget));
     }
 
     panel->widgets[panel->widget_count++] = new_widget;

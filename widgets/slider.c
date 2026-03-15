@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 
 constexpr u32 DEFAULT_FONT_SIZE = 14;
@@ -14,8 +15,10 @@ constexpr Color DEFAULT_LABEL_COLOR = WHITE;
 constexpr f32 DEFAULT_HANDLE_LEAK = 4.0f;
 constexpr u32 SLIDER_LABEL_OFFSET = 20;
 
-UiWidget uiSliderCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, f32 min, f32 max, f32 value) {
-    UiSlider* slider = (UiSlider*)arenaAlloc(arena, sizeof(UiSlider));
+static void uiSliderFreeWidget(void* self) { free(self); }
+
+UiWidget uiSliderCreate(u32 x, u32 y, u32 width, u32 height, f32 min, f32 max, f32 value) {
+    UiSlider* slider = (UiSlider*)malloc(sizeof(UiSlider));
     *slider = (UiSlider){
         .bounds =
             (Rectangle){
@@ -47,6 +50,7 @@ UiWidget uiSliderCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, f32 m
         ._widget = slider,
         .update = uiSliderUpdate,
         .render = uiSliderRender,
+        .free_widget = uiSliderFreeWidget,
     };
 }
 

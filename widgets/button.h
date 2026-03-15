@@ -1,7 +1,6 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
-#include <allocators/arena.h>
 #include <common.h>
 #include <raylib.h>
 #include <ui/ui.h>
@@ -33,7 +32,7 @@ typedef struct {
         void (*callback)(void);
 } UiButton;
 
-UiWidget uiButtonCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height);
+UiWidget uiButtonCreate(u32 x, u32 y, u32 width, u32 height);
 
 // Configuration functions
 void uiButtonSetCallback(UiWidget* self, void (*callback)(void));

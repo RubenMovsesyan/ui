@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ui/ui.h>
 
@@ -23,11 +24,23 @@ struct __SelItemNode {
         __SelItemNode* next;
 };
 
-UiWidget uiScrollableListCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
-    UiScrollableList* scrollable_list = (UiScrollableList*)arenaAlloc(arena, sizeof(UiScrollableList));
+static void uiScrollableListFreeWidget(void* self) {
+    UiScrollableList* sc_list = (UiScrollableList*)self;
+    __SelItemNode* node = sc_list->selected_items;
+    while (node) {
+        __SelItemNode* next = node->next;
+        free(node);
+        node = next;
+    }
+    free(sc_list->items);
+    UnloadRenderTexture(sc_list->list_texture);
+    free(sc_list);
+}
+
+UiWidget uiScrollableListCreate(u32 x, u32 y, u32 width, u32 height) {
+    UiScrollableList* scrollable_list = (UiScrollableList*)malloc(sizeof(UiScrollableList));
     *scrollable_list = (UiScrollableList){
-        .__arena = arena,
-        .items = (char**)arenaAlloc(arena, 1 * sizeof(char*)),
+        .items = (char**)malloc(1 * sizeof(char*)),
         .selected_items = nullptr,
         .hovered_item = INVALID_HOVERED_ITEM,
         .num_items = 0,
@@ -58,6 +71,7 @@ UiWidget uiScrollableListCreate(Arena* arena, u32 x, u32 y, u32 width, u32 heigh
         ._widget = scrollable_list,
         .update = uiScrollableListUpdate,
         .render = uiScrollableListRender,
+        .free_widget = uiScrollableListFreeWidget,
     };
 }
 
@@ -67,9 +81,8 @@ void uiScrollableListAddItem(UiWidget* self, char* item) {
     UiScrollableList* sc_list = (UiScrollableList*)(self->_widget);
 
     if (sc_list->num_items + 1 >= sc_list->items_cap) {
-        sc_list->items =
-            (char**)arenaRealloc(sc_list->__arena, (char*)sc_list->items, sc_list->items_cap * sizeof(char*), sc_list->items_cap * 2 * sizeof(char*));
         sc_list->items_cap *= 2;
+        sc_list->items = (char**)realloc(sc_list->items, sc_list->items_cap * sizeof(char*));
     }
 
     sc_list->items[sc_list->num_items++] = item;
@@ -97,7 +110,7 @@ void uiScrollableListGetSelectedItems(UiWidget* self, char*** selected_items, us
 
     *num_selected = count;
 
-    *selected_items = (char**)arenaAlloc(sc_list->__arena, *num_selected * sizeof(char*));
+    *selected_items = (char**)malloc(*num_selected * sizeof(char*));
 
     u32 i;
     for (current_node = sc_list->selected_items, i = 0; current_node != nullptr; i++, current_node = current_node->next) {
@@ -118,7 +131,7 @@ void uiScrollableListGetSelectedItemsIndices(UiWidget* self, usize** indices, us
 
     *num_selected = count;
 
-    *indices = (usize*)arenaAlloc(sc_list->__arena, *num_selected * sizeof(usize));
+    *indices = (usize*)malloc(*num_selected * sizeof(usize));
 
     u32 i;
     for (current_node = sc_list->selected_items, i = 0; current_node != nullptr; i++, current_node = current_node->next) {
@@ -197,7 +210,7 @@ void uiScrollableListSetHoverColor(UiWidget* self, Color color) {
 void __uiScrollableListSelectItem(UiScrollableList* sc_list, u32 item_number) {
     // If there are no selected items then just select it
     if (sc_list->selected_items == nullptr) {
-        sc_list->selected_items = (__SelItemNode*)arenaCalloc(sc_list->__arena, sizeof(__SelItemNode));
+        sc_list->selected_items = (__SelItemNode*)calloc(1, sizeof(__SelItemNode));
         sc_list->selected_items->item_index = item_number;
         RLOG(LL_DEBUG, "Selected item %u", item_number);
         return;
@@ -216,7 +229,7 @@ void __uiScrollableListSelectItem(UiScrollableList* sc_list, u32 item_number) {
     // If the item number is less than the current node then insert it before
     if (current_node->item_index > item_number) {
         RLOG(LL_DEBUG, "Inserted item %u", item_number);
-        __SelItemNode* created_node = (__SelItemNode*)arenaCalloc(sc_list->__arena, sizeof(__SelItemNode));
+        __SelItemNode* created_node = (__SelItemNode*)calloc(1, sizeof(__SelItemNode));
         created_node->item_index = item_number;
         created_node->next = current_node;
         current_node->next = nullptr;
@@ -238,7 +251,7 @@ void __uiScrollableListSelectItem(UiScrollableList* sc_list, u32 item_number) {
             // Insert it in order
             if (next_node->item_index > item_number) {
                 RLOG(LL_DEBUG, "Inserted item %u", item_number);
-                __SelItemNode* created_node = (__SelItemNode*)arenaCalloc(sc_list->__arena, sizeof(__SelItemNode));
+                __SelItemNode* created_node = (__SelItemNode*)calloc(1, sizeof(__SelItemNode));
                 created_node->item_index = item_number;
                 created_node->next = next_node;
                 current_node->next = created_node;
@@ -250,14 +263,14 @@ void __uiScrollableListSelectItem(UiScrollableList* sc_list, u32 item_number) {
     }
 
     // If we have treversed and haven't found the item, then select it
-    current_node->next = (__SelItemNode*)arenaCalloc(sc_list->__arena, sizeof(__SelItemNode));
+    current_node->next = (__SelItemNode*)calloc(1, sizeof(__SelItemNode));
     current_node->next->item_index = item_number;
     RLOG(LL_DEBUG, "Selected item %u", item_number);
 }
 
 void __uiScrollableListSelectSingleItem(UiScrollableList* sc_list, u32 item_number) {
     if (sc_list->selected_items == nullptr) {
-        sc_list->selected_items = (__SelItemNode*)arenaCalloc(sc_list->__arena, sizeof(__SelItemNode));
+        sc_list->selected_items = (__SelItemNode*)calloc(1, sizeof(__SelItemNode));
         sc_list->selected_items->item_index = item_number;
         RLOG(LL_DEBUG, "Selected item %u", item_number);
         return;

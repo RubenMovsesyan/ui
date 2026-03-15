@@ -1,7 +1,6 @@
 #ifndef IMAGE_VIEW_H
 #define IMAGE_VIEW_H
 
-#include <allocators/arena.h>
 #include <common.h>
 #include <raylib.h>
 #include <ui/ui.h>
@@ -21,7 +20,7 @@ typedef struct {
         bool is_dragging;
 } UiImageView;
 
-UiWidget uiImageViewCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, Texture2D texture);
+UiWidget uiImageViewCreate(u32 x, u32 y, u32 width, u32 height, Texture2D texture);
 
 // Configuration functions
 void uiImageViewSetPosition(UiWidget* self, Vector2 pos);

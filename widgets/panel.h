@@ -9,7 +9,6 @@ constexpr usize PANEL_ID_LEN = sizeof(PANEL_ID);
 
 typedef struct {
         u8 _id[PANEL_ID_LEN];
-        Arena* __arena;
 
         UiWidget* widgets;
         usize widget_count;
@@ -22,7 +21,7 @@ typedef struct {
         Color background_color;
 } UiPanel;
 
-UiWidget uiPanelCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height);
+UiWidget uiPanelCreate(u32 x, u32 y, u32 width, u32 height);
 
 // Configuration functions
 UiWidget* uiPanelAddWidget(UiWidget* self, UiWidget new_widget);

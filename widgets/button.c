@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <rlog.h>
+#include <stdlib.h>
 #include <string.h>
 
 constexpr u32 DEFAULT_FONT_SIZE = 14;
@@ -13,8 +14,10 @@ constexpr Color DEFAULT_TEXT_COLOR = BLACK;
 constexpr Color DEFAULT_HOVER_TINT = LIGHTGRAY;
 constexpr Color DEFAULT_PRESSED_TINT = DARKGRAY;
 
-UiWidget uiButtonCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
-    UiButton* button = (UiButton*)arenaAlloc(arena, sizeof(UiButton));
+static void uiButtonFreeWidget(void* self) { free(self); }
+
+UiWidget uiButtonCreate(u32 x, u32 y, u32 width, u32 height) {
+    UiButton* button = (UiButton*)malloc(sizeof(UiButton));
     *button = (UiButton){
         .button_rect =
             (Rectangle){
@@ -42,6 +45,7 @@ UiWidget uiButtonCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height) {
         ._widget = button,
         .update = uiButtonUpdate,
         .render = uiButtonRender,
+        .free_widget = uiButtonFreeWidget,
     };
 }
 

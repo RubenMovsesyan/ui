@@ -1,7 +1,6 @@
 #ifndef IMAGE_OVERLAY_H
 #define IMAGE_OVERLAY_H
 
-#include <allocators/arena.h>
 #include <common.h>
 #include <raylib.h>
 #include <ui/ui.h>
@@ -22,7 +21,6 @@ typedef struct {
 
 typedef struct {
         u8 _id[IMAGE_OVERLAY_ID_LEN];
-        Arena* __arena;
 
         UiWidget* attached_image_view; // image view this overlay is drawn on top of
 
@@ -41,7 +39,7 @@ typedef struct {
 
 // Creates an overlay widget attached to the given image view widget.
 // The overlay has no visual until locations are added.
-UiWidget uiImageOverlayCreate(Arena* arena, UiWidget* attached_image_view);
+UiWidget uiImageOverlayCreate(UiWidget* attached_image_view);
 
 // Location management
 // Returns the index of the newly added location.

@@ -12,7 +12,6 @@ typedef struct __SelItemNode __SelItemNode;
 
 typedef struct {
         u8 _id[SCROLLABLE_LIST_ID_LEN];
-        Arena* __arena;
 
         // List data
         char** items;
@@ -37,7 +36,7 @@ typedef struct {
         Color selection_color;
 } UiScrollableList;
 
-UiWidget uiScrollableListCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height);
+UiWidget uiScrollableListCreate(u32 x, u32 y, u32 width, u32 height);
 
 // Configuration functions
 void uiScrollableListAddItem(UiWidget* self, char* item);

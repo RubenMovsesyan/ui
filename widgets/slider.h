@@ -1,7 +1,6 @@
 #ifndef SLIDER_H
 #define SLIDER_H
 
-#include <allocators/arena.h>
 #include <common.h>
 #include <raylib.h>
 #include <ui/ui.h>
@@ -41,7 +40,7 @@ typedef struct {
         void (*on_change)(f32 value);
 } UiSlider;
 
-UiWidget uiSliderCreate(Arena* arena, u32 x, u32 y, u32 width, u32 height, f32 min, f32 max, f32 value);
+UiWidget uiSliderCreate(u32 x, u32 y, u32 width, u32 height, f32 min, f32 max, f32 value);
 
 // Configuration functions
 void uiSliderSetPosition(UiWidget* self, Vector2 pos);
