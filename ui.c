@@ -2,18 +2,18 @@
 
 #include <raylib.h>
 #include <rlog.h>
+#include <stdlib.h>
 
 constexpr usize MAX_UI_WIDGETS = 100;
 
-UiWindow uiCreateWindow(Arena* arena, u32 width, u32 height, const char* title) {
+UiWindow uiCreateWindow(u32 width, u32 height, const char* title) {
     InitWindow(width, height, title);
 
     UiWindow window = {
         ._glfw_window = (GLFWwindow*)GetWindowHandle(),
-        .__arena = arena,
         .widget_cap = MAX_UI_WIDGETS,
         .widget_count = 0,
-        .widgets = (UiWidget*)arenaAlloc(arena, MAX_UI_WIDGETS * sizeof(UiWidget)),
+        .widgets = (UiWidget*)malloc(MAX_UI_WIDGETS * sizeof(UiWidget)),
         ._2D_camaera = {
             .zoom = 1.0f,
             .rotation = 0.0f,
@@ -25,11 +25,19 @@ UiWindow uiCreateWindow(Arena* arena, u32 width, u32 height, const char* title) 
     return window;
 }
 
-void uiCloseWindow(UiWindow* window) { CloseWindow(); }
+void uiFree(UiWindow* window) {
+    for (usize i = 0; i < window->widget_count; i++) {
+        UiWidget* w = &window->widgets[i];
+        w->free_widget(w->_widget);
+    }
+    free(window->widgets);
+    CloseWindow();
+}
 
 UiWidget* uiAddWidget(UiWindow* window, UiWidget widget) {
     if (window->widget_count >= window->widget_cap) {
-        RLOG(LL_FATAL, "Widget Capacity Exceeded");
+        window->widget_cap *= 2;
+        window->widgets = (UiWidget*)realloc(window->widgets, window->widget_cap * sizeof(UiWidget));
     }
 
     window->widgets[window->widget_count++] = widget;

@@ -2,9 +2,9 @@
 #define UI_H
 
 #include <GLFW/glfw3.h>
-#include <allocators/arena.h>
 #include <common.h>
 #include <raylib.h>
+#include <stdlib.h>
 
 #define __CHECK_WIDGET__(type, self, ID, ID_LEN)                                                                                                     \
     do {                                                                                                                                             \
@@ -19,13 +19,13 @@
 typedef struct {
         void (*update)(void* /* self pointer */, Vector2 offset);
         void (*render)(void* /* self pointer */);
+        void (*free_widget)(void* self);
 
         void* _widget;
 } UiWidget;
 
 typedef struct {
         GLFWwindow* _glfw_window;
-        Arena* __arena;
 
         UiWidget* widgets;
         usize widget_count;
@@ -34,8 +34,8 @@ typedef struct {
         Camera2D _2D_camaera;
 } UiWindow;
 
-UiWindow uiCreateWindow(Arena* arena, u32 width, u32 height, const char* title);
-void uiCloseWindow(UiWindow* window);
+UiWindow uiCreateWindow(u32 width, u32 height, const char* title);
+void uiFree(UiWindow* window);
 
 UiWidget* uiAddWidget(UiWindow* window, UiWidget widget);
 
