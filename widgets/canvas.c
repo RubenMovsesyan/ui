@@ -88,18 +88,18 @@ void uiCanvasRender(void* self) {
     if (canvas->draw) {
         f32 hw = canvas->texture.texture.width / 2.0f / canvas->scale;
         f32 hh = canvas->texture.texture.height / 2.0f / canvas->scale;
+        rlSetCullFace(RL_CULL_FACE_FRONT);
         rlMatrixMode(RL_PROJECTION);
         rlPushMatrix();
         rlLoadIdentity();
-        // bottom > top here: compensates for the blit's source_rect.height = -height flip
-        // so that +y world ends up visually up on screen
-        rlOrtho(-hw, hw, hh, -hh, -1, 1);
+        rlOrtho(-hw, hw, -hh, hh, -1, 1);
         rlMatrixMode(RL_MODELVIEW);
         canvas->draw(canvas->texture, canvas->user_data);
         rlDrawRenderBatchActive(); // flush while our projection is still active
         rlMatrixMode(RL_PROJECTION);
         rlPopMatrix();
         rlMatrixMode(RL_MODELVIEW);
+        rlSetCullFace(RL_CULL_FACE_BACK);
     }
     EndTextureMode();
 
