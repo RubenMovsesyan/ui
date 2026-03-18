@@ -74,6 +74,8 @@ static inline void ui_lib_add_to_build(Build* b) {
     buildAddObject(b, newObject(_ui_lib_path("widgets/image_overlay.c")));
     buildAddObject(b, newObject(_ui_lib_path("widgets/scrollable_list.c")));
     buildAddObject(b, newObject(_ui_lib_path("widgets/canvas.c")));
+    buildAddObject(b, newObject(_ui_lib_path("widgets/label.c")));
+    buildAddObject(b, newObject(_ui_lib_path("widgets/checkbox.c")));
 }
 
 #endif // UI_LIB_BUILD_H
