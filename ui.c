@@ -5,9 +5,11 @@
 #include <stdlib.h>
 
 constexpr usize MAX_UI_WIDGETS = 100;
+constexpr i32 MAX_FPS = 165;
 
 UiWindow uiCreateWindow(u32 width, u32 height, const char* title) {
     InitWindow(width, height, title);
+    SetTargetFPS(MAX_FPS);
 
     UiWindow window = {
         ._glfw_window = (GLFWwindow*)GetWindowHandle(),
