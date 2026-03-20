@@ -12,7 +12,8 @@ constexpr Color DEFAULT_BACKGROUND_COLOR = RAYWHITE;
 static void uiPanelFreeWidget(void* self) {
     UiPanel* panel = (UiPanel*)self;
     for (usize i = 0; i < panel->widget_count; i++) {
-        panel->widgets[i].free_widget(panel->widgets[i]._widget);
+        panel->widgets[i]->free_widget(panel->widgets[i]->_widget);
+        free(panel->widgets[i]);
     }
     free(panel->widgets);
     UnloadRenderTexture(panel->texture);
@@ -29,7 +30,7 @@ UiWidget uiPanelCreate(u32 x, u32 y, u32 width, u32 height) {
                 .width = width,
                 .height = height,
             },
-        .widgets = (UiWidget*)malloc(DEFAULT_WIDGET_CAP * sizeof(UiWidget)),
+        .widgets = (UiWidget**)malloc(DEFAULT_WIDGET_CAP * sizeof(UiWidget*)),
         .widget_count = 0,
         .widget_cap = DEFAULT_WIDGET_CAP,
         .background_color = DEFAULT_BACKGROUND_COLOR,
@@ -54,11 +55,13 @@ UiWidget* uiPanelAddWidget(UiWidget* self, UiWidget new_widget) {
 
     if (panel->widget_count >= panel->widget_cap) {
         panel->widget_cap *= 2;
-        panel->widgets = (UiWidget*)realloc(panel->widgets, panel->widget_cap * sizeof(UiWidget));
+        panel->widgets = (UiWidget**)realloc(panel->widgets, panel->widget_cap * sizeof(UiWidget*));
     }
 
-    panel->widgets[panel->widget_count++] = new_widget;
-    return &panel->widgets[panel->widget_count - 1];
+    UiWidget* slot = (UiWidget*)malloc(sizeof(UiWidget));
+    *slot = new_widget;
+    panel->widgets[panel->widget_count++] = slot;
+    return slot;
 }
 
 void uiPanelSetVisible(UiWidget* self, bool visible) {
@@ -102,7 +105,7 @@ void uiPanelUpdate(void* self, Vector2 offset) {
     Vector2 mouse_pos = Vector2Subtract(GetMousePosition(), offset);
     if (CheckCollisionPointRec(mouse_pos, panel->bounds)) {
         for (u32 i = 0; i < panel->widget_count; ++i) {
-            panel->widgets[i].update(panel->widgets[i]._widget, Vector2Subtract((Vector2){panel->bounds.x, panel->bounds.y}, offset));
+            panel->widgets[i]->update(panel->widgets[i]->_widget, Vector2Subtract((Vector2){panel->bounds.x, panel->bounds.y}, offset));
         }
     }
 }
@@ -118,7 +121,7 @@ void uiPanelRender(void* self) {
     BeginTextureMode(panel->texture);
     DrawRectangle(0, 0, panel->texture.texture.width, panel->texture.texture.height, panel->background_color);
     for (u32 i = 0; i < panel->widget_count; ++i) {
-        panel->widgets[i].render(panel->widgets[i]._widget);
+        panel->widgets[i]->render(panel->widgets[i]->_widget);
     }
     EndTextureMode();
 

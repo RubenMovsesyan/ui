@@ -10,7 +10,7 @@ constexpr usize PANEL_ID_LEN = sizeof(PANEL_ID);
 typedef struct {
         u8 _id[PANEL_ID_LEN];
 
-        UiWidget* widgets;
+        UiWidget** widgets;
         usize widget_count;
         usize widget_cap;
         bool is_visible;
